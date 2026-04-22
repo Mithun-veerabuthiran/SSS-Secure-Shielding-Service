@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  flask-backend:
+    build: .
+    container_name: sss-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      # Map the SQLite DB and Logs so data persists even if the container turns off
+      - ./mappings.db:/app/mappings.db
+      - ./app.log:/app/app.log
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped

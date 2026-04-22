@@ -1,0 +1,24 @@
+﻿Generating 1000 records of test data...
+Generated text length: 95306 characters
+
+--- Testing Anonymization ---
+Anonymization successful!
+Time taken: 9.05 seconds
+Anonymized text preview: User William Johnson can be contacted at rodney87@example.net or by phone at +1-840-702-6001x670.
+User Megan Mason can be contacted at ryan88@example.net or by phone at 362-490-1123x064.
+User Megan Fl...
+
+--- Testing De-anonymization ---
+De-anonymization successful!
+Time taken: 0.16 seconds
+De-anonymized text preview: User Steven York can be contacted at troy52@example.com or by phone at +1-206-841-0113x8577.
+User Ronald Montoya can be contacted at april85@example.com or by phone at (331)555-3424.
+User Kristin Smit...
+
+--- Verification ---
+WARNING: De-anonymized text does NOT match the original text.
+Original length: 95306
+Restored length: 95341
+First difference at index 612:
+Original: 'can be contacted at kvasquez@example.net'
+Restored: 'can be contacted at traciwalter@example.'

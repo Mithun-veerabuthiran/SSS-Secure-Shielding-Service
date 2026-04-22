@@ -1,0 +1,18 @@
+Generating 100 test sentences with known Ground Truth PII...
+
+Sending data to SSS Backend for extraction...
+
+==================================================
+      SSS PII EXTRACTION ACCURACY REPORT
+==================================================
+Total Sentences Tested: 100
+Total PII Entities (Ground Truth): 400
+---
+True Positives (Correctly Extracted) : 379
+False Negatives (Missed by AI)       : 21
+False Positives (Incorrectly Flagged): 0
+---
+Precision : 100.00%
+Recall    : 94.75%
+F1 Score  : 97.30%
+==================================================
