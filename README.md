@@ -56,18 +56,23 @@ Users often share names, emails, phone numbers, addresses, and other identifiers
 
 ```mermaid
 flowchart LR
-    U[User on ChatGPT Web] --> E[Chrome Extension\ncontent.js + background.js]
-    E --> B[Flask Backend\nflaskBackend.py]
-    B --> D1[RoBERTa NER\nupdate.py]
-    B --> D2[Presidio Analyzer]
-    B --> A[Anonymize or Redact]
-    A --> M[(SQLite mappings.db\nFernet-encrypted mapping JSON)]
-    E --> C[Prompt replaced in composer]
-    C --> S[ChatGPT Service]
-    S --> R[Response rendered in page]
-    E --> G[/get_mappings]
-    G --> X[Client-side de-anonymization in DOM]
+    U["User on ChatGPT Web"] --> E["Chrome Extension<br/>content.js + background.js"]
+    E --> B["Flask Backend<br/>flaskBackend.py"]
+
+    B --> D1["RoBERTa NER<br/>update.py"]
+    B --> D2["Presidio Analyzer"]
+    B --> A["Anonymize or Redact"]
+
+    A --> M["SQLite mappings.db<br/>Fernet-encrypted mapping JSON"]
+
+    E --> C["Prompt replaced in composer"]
+    C --> S["ChatGPT Service"]
+    S --> R["Response rendered in page"]
+
+    E --> G["/get_mappings"]
+    G --> X["Client-side de-anonymization in DOM"]
 ```
+
 
 ## Privacy Pipeline
 
