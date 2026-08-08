@@ -5,9 +5,9 @@
 ![Extension](https://img.shields.io/badge/Browser-Chrome%20Extension%20MV3-green)
 ![PII Detection](https://img.shields.io/badge/PII-Presidio%20%2B%20RoBERTa-orange)
 
-**Privacy-first protection for AI interactions through real-time PII detection, anonymization, and pseudonymization.**
+Privacy-first protection for AI interactions through real-time PII detection, anonymization, pseudonymization, and redaction.
 
-SSS (Secure Shielding Service) is a browser-extension-driven privacy layer that processes prompt text before it is sent to supported AI services. It combines backend PII detection with configurable anonymization/redaction and mapping-based de-anonymization.
+SSS (Secure Shielding Service) is a Chrome extension and Flask-based privacy layer that processes sensitive prompt content before it is submitted to supported AI services. It combines Microsoft Presidio, RoBERTa-based NER, custom recognizers, configurable anonymization/redaction, and encrypted mapping storage to reduce accidental exposure of personally identifiable information (PII).
 
 ## Project Overview
 
@@ -169,7 +169,7 @@ SSS-Secure-Shielding-Service/
 ### Clone Repository
 
 ```bash
-git clone https://github.com/Shashankss1205/SSS-Secure-Shielding-Service.git
+git clone https://github.com/Mithun-veerabuthiran/SSS-Secure-Shielding-Service.git
 cd SSS-Secure-Shielding-Service
 ```
 
