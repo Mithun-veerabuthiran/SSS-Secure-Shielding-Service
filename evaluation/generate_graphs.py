@@ -1,5 +1,9 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
+
+results_dir = os.path.join(os.path.dirname(__file__), 'results')
+os.makedirs(results_dir, exist_ok=True)
 
 # Data
 models = ['NLP', 'BERT', 'LLM', 'RoBERTa (Empirical)']
@@ -22,7 +26,7 @@ for bar in bars:
     yval = bar.get_height()
     plt.text(bar.get_x() + bar.get_width()/2, yval + 1, f"{yval}%", ha='center', va='bottom', fontweight='bold')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.savefig('accuracy_graph.png', dpi=300, bbox_inches='tight')
+plt.savefig(os.path.join(results_dir, 'accuracy_graph.png'), dpi=300, bbox_inches='tight')
 plt.close()
 
 # 2. Loss Graph
@@ -34,7 +38,7 @@ plt.ylim(0, 0.45)
 for i, v in enumerate(loss):
     plt.text(i, v + 0.015, str(v), ha='center', fontweight='bold')
 plt.grid(True, linestyle='--', alpha=0.7)
-plt.savefig('loss_graph.png', dpi=300, bbox_inches='tight')
+plt.savefig(os.path.join(results_dir, 'loss_graph.png'), dpi=300, bbox_inches='tight')
 plt.close()
 
 # 3. Comprehensive Comparison Graph
@@ -51,7 +55,7 @@ plt.ylim(0, 120)
 plt.legend(loc='upper right', bbox_to_anchor=(1, 1))
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
-plt.savefig('comprehensive_comparison_graph.png', dpi=300)
+plt.savefig(os.path.join(results_dir, 'comprehensive_comparison_graph.png'), dpi=300)
 plt.close()
 
-print("Graph images successfully generated with empirical data and saved to current directory!")
+print(f"Graph images successfully generated with empirical data and saved to {results_dir}!")

@@ -4,53 +4,46 @@
 ![Flask](https://img.shields.io/badge/Backend-Flask-black)
 ![Extension](https://img.shields.io/badge/Browser-Chrome%20Extension%20MV3-green)
 ![PII Detection](https://img.shields.io/badge/PII-Presidio%20%2B%20RoBERTa-orange)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 
 Privacy-first protection for AI interactions through real-time PII detection, anonymization, pseudonymization, and redaction.
 
 SSS (Secure Shielding Service) is a Chrome extension and Flask-based privacy layer that processes sensitive prompt content before it is submitted to supported AI services. It combines Microsoft Presidio, RoBERTa-based NER, custom recognizers, configurable anonymization/redaction, and encrypted mapping storage to reduce accidental exposure of personally identifiable information (PII).
 
-## Project Overview
+---
 
-SSS helps reduce accidental exposure of sensitive information in AI prompts.
+## Overview
 
-```text
-User Input
-    ↓
-Browser Extension Interception
-    ↓
-PII Detection (RoBERTa + Presidio)
-    ↓
-Anonymization / Pseudonymization / Redaction
-    ↓
-AI Service (current implementation: ChatGPT web)
-    ↓
-Response in Browser
-    ↓
-Mapping-based De-anonymization (when mappings exist)
-    ↓
-User
-```
+SSS operates as an inline security boundary between users and web-based AI platforms. When a user submits text containing sensitive credentials or personal identifiers, SSS automatically intercepts, detects, and transforms PII into safe pseudonyms or redaction tokens before the prompt reaches external AI servers.
 
-## Why SSS?
+## Problem Statement
 
-Users often share names, emails, phone numbers, addresses, and other identifiers while interacting with LLMs. SSS introduces a preprocessing layer so that sensitive values can be transformed before prompts are submitted.
+As artificial intelligence platforms become central to daily workflows, users frequently copy and paste proprietary code, financial records, government identification numbers, medical information, and personal details into public LLM interfaces. Unsanitized prompt data risks exposure through data logging, model training pipelines, or potential third-party security breaches.
 
-## Key Features (Verified)
+## Solution
 
-- **Prompt anonymization endpoint** via Flask (`/anonymize`) with configurable mode (`fake` or `redact`)
-- **PII detection pipeline** using:
+SSS provides a non-intrusive, automated shielding layer:
+1. **Client-Side Interception**: A lightweight Chrome Extension captures prompts inside supported web interfaces.
+2. **Hybrid PII Detection**: A robust backend combines deep learning (RoBERTa NER) with pattern recognition (Microsoft Presidio + custom rules).
+3. **Reversible Shielding**: Sensitive values are replaced with realistic pseudonyms or redaction placeholders while storing Fernet-encrypted mappings in SQLite.
+4. **Contextual In-Page Restoration**: Client-side de-anonymization dynamically restores original values in the rendered web interface for seamless user interaction.
+
+## Key Features
+
+- **Multi-Method PII Detection**:
   - Microsoft Presidio (`presidio_analyzer`, `presidio_anonymizer`)
-  - RoBERTa NER pipeline (`Jean-Baptiste/roberta-large-ner-english`) through `update.py`
-- **Custom recognizers** for Aadhaar, financial account patterns, SSN, phone, and URL
-- **Pseudonymization with Faker** for realistic replacements (name/email/phone/location/etc.)
-- **Redaction mode** with deterministic `[REDACTED_<ENTITY>_<index>]` placeholders
-- **Encrypted mapping storage** in SQLite (`mappings.db`) using Fernet key material (`SECRET.key` generated locally)
-- **De-anonymization endpoint** (`/deanonymize`) that restores values using stored mappings
-- **Mapping retrieval endpoint** (`/get_mappings`) used by the extension for in-page restoration
-- **Config endpoint** (`/config`) for selected sites/models/methods/PII categories
-- **Health endpoint** (`/health`) for service status checks
-- **Background cleanup thread** that removes mapping rows older than 24 hours
-- **Dockerized backend** via `Dockerfile` and `docker-compose.yml`
+  - Deep learning RoBERTa NER pipeline (`Jean-Baptiste/roberta-large-ner-english`)
+  - Custom recognizers for Aadhaar, financial accounts, SSN, phone numbers, and URLs
+- **Configurable Transformation Modes**:
+  - **Pseudonymization (`fake`)**: Replaces entities with realistic fake data via Faker (names, emails, addresses).
+  - **Redaction (`redact`)**: Replaces entities with deterministic `[REDACTED_<ENTITY>_<INDEX>]` placeholders.
+- **Encrypted Mapping Storage**:
+  - Encrypts mapping dictionaries using AES-256 Fernet symmetric keys (`SECRET.key`).
+  - Stores mapping metadata in SQLite (`mappings.db`) with automatic 24-hour retention cleanup.
+- **RESTful Backend APIs**:
+  - `/anonymize`, `/deanonymize`, `/get_mappings`, `/config`, `/health`
+- **Dockerized Deployment**:
+  - Production-ready `Dockerfile` and `docker-compose.yml` for isolated container execution.
 
 ## Architecture
 
@@ -73,237 +66,244 @@ flowchart LR
     G --> X["Client-side de-anonymization in DOM"]
 ```
 
-
 ## Privacy Pipeline
 
-1. User writes a prompt in ChatGPT.
-2. Extension button triggers processing and sends prompt text + URL to backend.
-3. Backend detects entities via RoBERTa and Presidio/custom recognizers.
-4. Backend applies configured transformation:
-   - **Anonymization/Pseudonymization** (`fake`): replace with generated fake values.
-   - **Redaction** (`redact`): replace with redaction placeholders.
-5. Backend stores reverse mappings (encrypted) in SQLite.
-6. Extension updates prompt text in the ChatGPT input box.
-7. Extension fetches mappings and applies de-anonymization to visible chat content when matches exist.
+1. **User Action**: User enters prompt text in ChatGPT Web.
+2. **Interception**: Extension intercepts submission and forwards payload to backend `/anonymize`.
+3. **Entity Extraction**: Backend runs Presidio analyzer and RoBERTa NER to extract sensitive entities.
+4. **Transformation**: Replaces detected values with pseudonyms or redaction tokens based on active configuration.
+5. **Encrypted Mapping**: Stores original-to-shielded mapping in `mappings.db` encrypted with Fernet.
+6. **Prompt Substitution**: Extension updates the input area with transformed text for submission.
+7. **Client De-anonymization**: Extension queries `/get_mappings` to restore original terms locally in rendered DOM responses.
 
 ### Terminology
 
-- **Anonymization**: transforms sensitive content before sending.
-- **Pseudonymization**: replaces sensitive values with realistic substitutes while storing a mapping.
-- **Redaction**: masks/removes sensitive values with redaction tokens.
-
-## Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Browser Extension | JavaScript, Chrome Extension Manifest V3 APIs |
-| Backend | Python, Flask, flask-cors |
-| PII Detection | Microsoft Presidio + custom regex recognizers |
-| ML Entity Detection | Hugging Face Transformers RoBERTa NER pipeline |
-| Fake Data Generation | Faker |
-| Mapping Storage | SQLite (`mappings.db`) |
-| Mapping Protection | `cryptography` Fernet symmetric encryption |
-| Containerization | Docker, Docker Compose |
-| QA / Evaluation Scripts | Python scripts (`run_qa_tests.py`, `test_1000_data.py`, `calculate_accuracy.py`) |
-
-## Supported AI Platforms (Current Implementation)
-
-Based on `manifest.json` host/content script matches and `content.js` selectors:
-
-- **ChatGPT Web** (`https://chatgpt.com/*`, `https://chat.openai.com/*`)
-
-Notes:
-- Popup UI includes disabled options for Claude and Gemini, but they are not active integration targets in current extension behavior.
-
-## Browser Support
-
-The extension is implemented using **Chrome Extension Manifest V3** and Chromium APIs (`chrome.runtime`, `chrome.storage`, service worker background script).
-
-> Compatibility is expected for Chromium-based browsers that support MV3, but should be validated per browser/version before production use.
+- **Anonymization**: General process of obscuring personal identifiers.
+- **Pseudonymization**: Substituting sensitive values with realistic fake data while maintaining reverse mappings.
+- **Redaction**: Permanently or temporarily replacing identifiers with static tokens without preserving original values in prompt text.
 
 ## Project Structure
 
 ```text
 SSS-Secure-Shielding-Service/
-├── background.js
-├── content.js
-├── flaskBackend.py
-├── manifest.json
-├── popup/
-│   ├── popup.html
-│   ├── popup.js
-│   └── popup.css
-├── icons/
-│   └── icon16.png
-├── mappings/
-│   └── chatgpt.json
-├── training/
-│   ├── prompt.ipynb
-│   ├── tokenizer.pkl
-│   ├── tf_prompt_optimizer_enc.weights.h5
-│   ├── tf_prompt_optimizer_dec.weights.h5
-│   └── tf_transformer_prompt_optimizer.h5
-├── update.py
-├── run_qa_tests.py
-├── test_1000_data.py
-├── calculate_accuracy.py
-├── test_ocr.py
-├── test_ocr_api.py
-├── test_pdf_scan.py
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
+├── extension/       # Chrome Extension (Manifest V3)
+│   ├── manifest.json
+│   ├── background.js
+│   ├── content.js
+│   ├── popup/       # Extension popup UI & controls
+│   ├── icons/       # Extension toolbar icons
+│   └── mappings/    # Default site selector mappings
+├── backend/         # Flask Privacy Backend
+│   ├── flaskBackend.py   # Primary Flask API server
+│   ├── update.py         # RoBERTa PII extraction engine
+│   ├── requirements.txt  # Backend dependencies
+│   ├── Dockerfile        # Container image definition
+│   └── docker-compose.yml # Container orchestration
+├── ml/              # Machine Learning Resources
+│   └── training/    # Model fine-tuning notebooks & weights
+├── tests/           # Functional & Integration Tests
+│   ├── run_qa_tests.py
+│   ├── test_ocr.py
+│   ├── test_ocr_api.py
+│   └── test_pdf_scan.py
+├── evaluation/      # Accuracy Evaluation & Benchmarks
+│   ├── calculate_accuracy.py
+│   ├── test_1000_data.py
+│   ├── generate_graphs.py
+│   └── results/     # Benchmark output graphs
+│       ├── accuracy_graph.png
+│       ├── comprehensive_comparison_graph.png
+│       └── loss_graph.png
+├── .gitignore       # Repository exclusion rules
+├── LICENSE          # Apache License 2.0
+└── README.md        # Technical project documentation
 ```
+
+### Directory Descriptions
+
+- **`extension/`**: Contains the Manifest V3 browser extension scripts, popup interface, and content script rules.
+- **`backend/`**: Contains the Flask API server, Presidio/RoBERTa PII detection engine, Docker configuration, and requirements.
+- **`ml/`**: Stores Jupyter notebooks, model weights, and training datasets for ML prompt optimization experiments.
+- **`tests/`**: Functional test suite for API endpoints, OCR utilities, and document scanning verification.
+- **`evaluation/`**: Benchmarking scripts and generated metric visualization charts.
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Browser Extension** | JavaScript (ES6+), Chrome Extension Manifest V3 |
+| **Backend Framework** | Python 3.10+, Flask, flask-cors |
+| **PII Detection** | Microsoft Presidio Analyzer & Anonymizer, Regex Recognizers |
+| **Deep Learning NER** | Hugging Face Transformers (`Jean-Baptiste/roberta-large-ner-english`) |
+| **Data Pseudonymization** | Faker |
+| **Encryption & Storage** | SQLite (`mappings.db`), `cryptography` Fernet AES-256 |
+| **Containerization** | Docker, Docker Compose |
+| **Evaluation & Plotting** | Matplotlib, NumPy, Requests |
+
+## Supported AI Platforms
+
+Current implementation targets:
+- **ChatGPT Web** (`https://chatgpt.com/*`, `https://chat.openai.com/*`)
+
+> *Note*: The popup UI displays UI toggles for additional platforms (Claude, Gemini), which are reserved for future extension releases.
+
+## Browser Compatibility
+
+Tested and supported on **Chromium-based browsers** supporting Manifest V3 (Google Chrome, Brave, Microsoft Edge).
+
+## Prerequisites
+
+- **Python**: 3.10 or higher
+- **Browser**: Chrome / Chromium (MV3 support)
+- **Containerization (Optional)**: Docker & Docker Compose
+- **Package Manager**: `pip`
 
 ## Installation
 
-### Prerequisites
-
-- Python 3.10+ (Dockerfile uses Python 3.10 slim)
-- pip
-- Google Chrome (or another MV3-capable Chromium browser)
-- Git
-- Optional: Docker + Docker Compose
-
-### Clone Repository
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/Mithun-veerabuthiran/SSS-Secure-Shielding-Service.git
 cd SSS-Secure-Shielding-Service
 ```
 
-### Python Environment Setup
+### 2. Backend Setup
+
+Create and activate a virtual environment:
 
 ```bash
+# Create virtual environment
 python -m venv .venv
-```
 
-```bash
-# Windows
+# Activate on Windows (PowerShell / CMD)
 .venv\Scripts\activate
 
-# Linux/macOS
+# Activate on Linux / macOS
 source .venv/bin/activate
+
+# Install backend dependencies
+pip install -r backend/requirements.txt
 ```
+
+Download spaCy language model for Presidio:
+```bash
+python -m spacy download en_core_web_lg
+```
+
+### 3. Chrome Extension Setup
+
+1. Open Google Chrome and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** (toggle switch in the top right).
+3. Click **Load unpacked**.
+4. Select the `extension/` directory inside `SSS-Secure-Shielding-Service`.
+5. Verify that **LLM Data Anonymizer** appears in your active extensions.
+
+## Running the Application
+
+### Backend
+
+To start the backend server locally:
 
 ```bash
-pip install -r requirements.txt
+python backend/flaskBackend.py
 ```
 
-## Backend Configuration
+The backend starts at `http://localhost:5000`. You can verify health status by visiting `http://localhost:5000/health`.
 
-- `FLASK_PORT` (optional): backend port (defaults to `5000` in `flaskBackend.py`)
-- `FLASK_ENV` is set to `production` in `docker-compose.yml`
+### Chrome Extension
 
-The backend also generates/loads a local encryption key file named `SECRET.key` for mapping encryption.
+1. Ensure the Flask backend is running on `http://localhost:5000`.
+2. Open `https://chatgpt.com`.
+3. Type a prompt containing sample PII (e.g., *"My name is John Doe, email john@example.com"*).
+4. Click the injected SSS action button in the prompt box to shield your input before submitting.
 
-> Do not commit `.env`, `SECRET.key`, database files, or logs.
+## Docker Deployment
 
-## Run the Backend
+Alternatively, run the backend inside a Docker container:
 
 ```bash
-python flaskBackend.py
+# From repository root
+docker compose -f backend/docker-compose.yml up --build
 ```
 
-Default URL:
+This starts the `sss-backend` container on port `5000` with volume-mapped database storage.
 
-```text
-http://localhost:5000
-```
+## Configuration
 
-Health check:
+The backend supports runtime configuration updates via `POST /config`:
 
-```text
-GET /health
-```
+- **Sites**: Select active platform targets
+- **Models**: Select detection models (`Presidio`, `RoBERTa`)
+- **Methods**: Select transformation mode (`Pseudonymization`, `Redaction`)
+- **PIIs**: Configure entity categories (Names, Emails, Phone Numbers, Addresses, Credit Cards, SSN, Aadhaar, URLs)
 
-## Browser Extension Setup
+## API Endpoints
 
-1. Start the backend service first.
-2. Open browser extension management (`chrome://extensions/`).
-3. Enable **Developer mode**.
-4. Click **Load unpacked**.
-5. Select the repository root directory (contains `manifest.json`).
-6. Confirm extension appears in the toolbar.
-7. Open `https://chatgpt.com`.
-8. Enter non-sensitive sample text and click the extension’s injected processing button.
+- **`GET /health`**: Returns backend service health status (`{"status": "ok"}`).
+- **`POST /config`**: Configures active PII detection categories and modes.
+- **`POST /anonymize`**: Accepts prompt text and returns anonymized/redacted text + encrypted mappings.
+- **`GET /get_mappings`**: Retrieves active de-anonymization mappings for extension rendering.
+- **`POST /deanonymize`**: Restores anonymized text back to original values using session mappings.
 
-## Docker
+## Testing
 
-The provided container setup runs the Flask backend.
+Run backend functional QA tests:
 
 ```bash
-docker compose up --build
+python tests/run_qa_tests.py
 ```
 
-This starts service `sss-backend` and maps port `5000:5000`.
-
-## API Endpoints (Implemented)
-
-- `GET /health` — service health
-- `POST /config` — update anonymization configuration
-- `POST /anonymize` — detect + transform PII in text
-- `GET /get_mappings` — retrieve stored mappings grouped by URL
-- `POST /deanonymize` — restore anonymized text from mappings
-
-## Testing and Evaluation
-
-Available scripts:
-
-- `run_qa_tests.py` — backend API behavior checks (health/config/anonymize/deanonymize)
-- `test_1000_data.py` — larger-volume anonymize/deanonymize flow test using Faker data
-- `calculate_accuracy.py` — computes precision/recall/F1 from synthetic generated sentences
-- `test_ocr.py`, `test_ocr_api.py`, `test_pdf_scan.py` — experimental OCR-related scripts
-
-Example:
+Run OCR document scanning experiments:
 
 ```bash
-python run_qa_tests.py
+python tests/test_pdf_scan.py
 ```
 
-> Many scripts expect the backend running at `http://localhost:5000`.
+## Evaluation
 
-## Security & Privacy Considerations
+Run benchmark evaluation and generate metric graphs:
 
-- Never commit API keys, tokens, `.env`, `SECRET.key`, `mappings.db`, or logs.
-- Mapping data can contain sensitive reconstruction context; treat DB and key as sensitive.
-- Use HTTPS and hardened runtime configuration for production deployments.
-- Review extension permissions and host permissions before deploying broadly.
-- Use synthetic/non-sensitive data for testing whenever possible.
-- Rotate credentials/keys immediately if exposed.
+```bash
+# Evaluate extraction accuracy metrics
+python evaluation/calculate_accuracy.py
+
+# Generate metric comparison graphs
+python evaluation/generate_graphs.py
+```
+
+Graphs are output to `evaluation/results/` (`accuracy_graph.png`, `loss_graph.png`, `comprehensive_comparison_graph.png`).
+
+## Security and Privacy Considerations
+
+- **Secret Key Protection**: `SECRET.key` is auto-generated locally for Fernet encryption and MUST NOT be committed to version control.
+- **Database Hygiene**: `mappings.db` contains encrypted reverse mappings and is excluded from Git.
+- **Retention**: A background thread automatically purges expired mappings after 24 hours.
+- **Sanitized Testing**: Use synthetic data during testing and evaluation.
 
 ## Limitations
 
-- PII detection quality depends on model/regex behavior and input context.
-- Current extension integration is focused on ChatGPT web flows.
-- DOM selectors may need updates as AI website UIs change.
-- RoBERTa model loading can be resource-intensive on first run.
-- Popup currently sends `/status` and `getSettings` calls that are not implemented as backend/background handlers in this codebase.
-- Production deployment needs additional hardening (auth, observability, secret management, environment isolation).
+- Detection accuracy depends on model context and pattern recognizers.
+- Dynamic web UI DOM selectors for ChatGPT may require updates if platform layouts change.
+- Initial load of deep learning models (RoBERTa) requires sufficient RAM and CPU/GPU resources.
 
 ## Roadmap
 
-Planned directions reflected by current project intent:
-
-- Expand integrations beyond current ChatGPT-targeted workflow
-- Add richer custom anonymization rule controls
-- Improve performance/latency under larger prompt volumes
-- Strengthen enterprise deployment patterns and operational controls
-- Improve model evaluation and reproducibility pipeline
+- Expand extension integration to Claude Web and Google Gemini Web.
+- Introduce client-side custom regex rule builder in extension popup.
+- Add local LLM support for offline prompt anonymization.
+- Support enterprise single sign-on (SSO) and centralized DLP policy management.
 
 ## Contributing
 
 1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Add/update tests where applicable.
-5. Validate locally.
-6. Open a pull request.
+2. Create a feature branch (`git checkout -b feature/amazing-feature`).
+3. Commit your changes (`git commit -m 'Add amazing feature'`).
+4. Push to the branch (`git push origin feature/amazing-feature`).
+5. Open a Pull Request.
 
 ## Responsible Use
 
-SSS is a privacy-enhancement layer, not a guarantee of complete anonymity or security. Always review transformed content before submitting sensitive information to external AI services.
+SSS is a privacy-enhancement utility designed to mitigate accidental data exposure. It is not a replacement for enterprise security compliance audits or absolute security guarantees.
 
 ## License
 

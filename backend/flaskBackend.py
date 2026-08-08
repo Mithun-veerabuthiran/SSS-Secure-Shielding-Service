@@ -13,9 +13,15 @@ from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 import hashlib
 
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 # --- SECURE ENCRYPTION SETUP ---
 # Initialize or load AES-256 Symmetric Key for Database Encryption-at-Rest
-KEY_FILE = "SECRET.key"
+KEY_FILE = os.path.join(BASE_DIR, "SECRET.key")
 if not os.path.exists(KEY_FILE):
     encryption_key = Fernet.generate_key()
     with open(KEY_FILE, "wb") as key_file:
@@ -114,7 +120,7 @@ fake = Faker()
 import sqlite3
 
 # Path to the SQLite DB
-DB_PATH = 'mappings.db'
+DB_PATH = os.path.join(BASE_DIR, 'mappings.db')
 
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
