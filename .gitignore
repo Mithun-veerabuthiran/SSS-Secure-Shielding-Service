@@ -1,0 +1,51 @@
+# Antigravity local agents
+.github/agents/
+
+# Secrets and credentials
+SECRET.key
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+credentials.*
+secrets.*
+
+# Generated logs and databases
+*.log
+app.log
+error.log
+*.db
+mappings.db
+*.sqlite
+*.sqlite3
+
+# Python cache & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.tmp
+*.cache
+venv/
+.venv/
+env/
+sss/
+
+# Build & IDE files
+build/
+dist/
+target/
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Test-generated output files
+*_output.txt
+*_output2.txt
+*_utf8.txt
+test_results.txt
+test_accuracy_results.txt
