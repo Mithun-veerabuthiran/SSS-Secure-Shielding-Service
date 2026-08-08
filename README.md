@@ -307,7 +307,7 @@ SSS is a privacy-enhancement layer, not a guarantee of complete anonymity or sec
 
 ## License
 
-This project currently does not specify an open-source license. Contact the repository owner for usage and distribution permissions.
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
